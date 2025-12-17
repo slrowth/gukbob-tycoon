@@ -37,7 +37,7 @@ import {
   BRAND_MESSAGES,
   LEVEL_DURATION_TICKS
 } from './constants';
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { fetchLeaderboard, isApiConfigured } from './apiClient';
 
 import Stove from './components/Stove';
 import RiceStation from './components/RiceStation';
@@ -115,21 +115,17 @@ const App: React.FC = () => {
 
   // Fetch Top 3 Rankers on Intro
   useEffect(() => {
-    if (phase === GamePhase.INTRO && isSupabaseConfigured()) {
-       const fetchTopRankers = async () => {
+    if (phase === GamePhase.INTRO && isApiConfigured()) {
+       const loadTopRankers = async () => {
          setIsRankLoading(true);
-         const { data } = await supabase
-           .from('leaderboard')
-           .select('*')
-           .order('score', { ascending: false })
-           .limit(3);
-         
-         if (data) {
-           setTopRankers(data);
+         const data = await fetchLeaderboard();
+         // Data is already sorted by the Google Script
+         if (data && data.length > 0) {
+           setTopRankers(data.slice(0, 3));
          }
          setIsRankLoading(false);
        };
-       fetchTopRankers();
+       loadTopRankers();
     }
   }, [phase]);
 
@@ -531,14 +527,14 @@ const App: React.FC = () => {
             {/* Header / Menu Icon */}
             <div className="w-full flex justify-between p-4 z-20 pointer-events-none">
               {/* Online Indicator */}
-              {isSupabaseConfigured() && (
+              {isApiConfigured() && (
                  <div className="flex items-center gap-1 bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm border border-green-900">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></div>
                     <span className="text-[10px] text-green-400 font-mono">ONLINE</span>
                  </div>
               )}
               {/* Spacer if not online to keep layout */}
-              {!isSupabaseConfigured() && <div />}
+              {!isApiConfigured() && <div />}
               
               <Menu className="text-white w-8 h-8 drop-shadow-lg" />
             </div>
@@ -575,7 +571,7 @@ const App: React.FC = () => {
                     <span className="text-yellow-400 font-bold text-xs tracking-widest">명예의 전당</span>
                   </div>
                   <div className="space-y-1">
-                    {isSupabaseConfigured() ? (
+                    {isApiConfigured() ? (
                         isRankLoading ? (
                           <div className="text-center text-xs text-gray-400 py-1 flex justify-center gap-1">
                              <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>

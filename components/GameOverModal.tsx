@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, Trophy, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { fetchLeaderboard, submitScore, isApiConfigured } from '../apiClient';
 import { LeaderboardEntry } from '../types';
 
 interface GameOverModalProps {
@@ -20,23 +20,18 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
 
   // Check config and fetch leaderboard on mount
   useEffect(() => {
-    setIsConfigured(isSupabaseConfigured());
-    if (isSupabaseConfigured()) {
-      fetchLeaderboard();
+    setIsConfigured(isApiConfigured());
+    if (isApiConfigured()) {
+      loadLeaderboard();
     }
   }, [showAll]);
 
-  const fetchLeaderboard = async () => {
+  const loadLeaderboard = async () => {
     setIsListLoading(true);
-    const limit = showAll ? 100 : 10;
-    const { data, error } = await supabase
-      .from('leaderboard')
-      .select('*')
-      .order('score', { ascending: false })
-      .limit(limit);
-
-    if (!error && data) {
-      setLeaderboard(data);
+    const data = await fetchLeaderboard();
+    if (data) {
+      // If "Show All", show up to 100 (which is what API returns), else show top 5
+      setLeaderboard(showAll ? data : data.slice(0, 10));
     }
     setIsListLoading(false);
   };
@@ -47,20 +42,17 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
     
     setLoading(true);
     
-    // Insert score to Supabase
-    const { error } = await supabase
-      .from('leaderboard')
-      .insert([{ nickname: nickname.substring(0, 10), score }]); // Limit nickname length
-
-    setLoading(false);
-
-    if (!error) {
-      setSubmitted(true);
-      fetchLeaderboard(); // Refresh list
-    } else {
-      console.error("Error submitting score:", error);
-      alert("점수 등록에 실패했습니다.");
-    }
+    // Submit to Google Sheet
+    // Using 'await' but note that 'no-cors' mode might return success even if failed, 
+    // so we rely on the user having correct setup.
+    await submitScore(nickname.substring(0, 10), score);
+    
+    // Wait a moment for Google Sheet to process (it can be slow)
+    setTimeout(async () => {
+        setSubmitted(true);
+        setLoading(false);
+        await loadLeaderboard(); // Refresh list
+    }, 1500);
   };
 
   return (
@@ -157,7 +149,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
              </div>
              <p className="text-xs text-gray-600 font-bold">
                랭킹 시스템 미설정<br/>
-               <span className="font-normal text-[10px]">(메인 화면의 설정에서 API 키를 등록하세요)</span>
+               <span className="font-normal text-[10px]">(메인 화면의 설정에서 구글 시트 URL을 등록하세요)</span>
              </p>
            </div>
         )}
@@ -197,7 +189,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
             ) : (
               leaderboard.map((entry, index) => (
                 <div 
-                  key={entry.id} 
+                  key={index} 
                   className={`flex justify-between items-center text-xs p-1 rounded ${entry.nickname === nickname && submitted ? 'bg-yellow-100 border border-yellow-300' : 'even:bg-gray-50'}`}
                 >
                   <div className="flex items-center gap-2">
@@ -209,7 +201,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
                     </span>
                   </div>
                   <span className="font-mono text-gray-600">
-                    {entry.score.toLocaleString()}
+                    {Number(entry.score).toLocaleString()}
                   </span>
                 </div>
               ))
