@@ -47,7 +47,7 @@ import BrandTicker from './components/BrandTicker';
 import ReputationBar from './components/ReputationBar';
 import FeedbackOverlay from './components/FeedbackOverlay';
 import { CustomerAsset, MasterPotAsset } from './components/GameAssets';
-import { Play, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 const DESIGN_WIDTH = 390; // Standard mobile width base
 
@@ -86,7 +86,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleResize = () => {
       const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
       
       // Calculate scale to fit width, but verify height fits too if possible
       let newScale = windowWidth / DESIGN_WIDTH;
@@ -106,7 +105,6 @@ const App: React.FC = () => {
   // Helper to add floating effects
   const addEffect = (text: string, type: FeedbackEffect['type'], x: number | 'center', y: number | 'center') => {
     if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
     
     // We need to adjust coordinates because of the scaling transform
     // The incoming X/Y might be based on screen coordinates or scaled coordinates.
