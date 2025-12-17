@@ -49,7 +49,8 @@ import FeedbackOverlay from './components/FeedbackOverlay';
 import { CustomerAsset, MasterPotAsset } from './components/GameAssets';
 import { Menu } from 'lucide-react';
 
-const DESIGN_WIDTH = 390; // Standard mobile width base
+const DESIGN_WIDTH = 390;
+const DESIGN_HEIGHT = 800; // Fixed design height for safe area scaling
 
 const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>(GamePhase.INTRO);
@@ -86,12 +87,14 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleResize = () => {
       const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
       
-      // Calculate scale to fit width, but verify height fits too if possible
-      let newScale = windowWidth / DESIGN_WIDTH;
+      // Calculate scale to fit width AND height (contain strategy)
+      const scaleX = windowWidth / DESIGN_WIDTH;
+      const scaleY = windowHeight / DESIGN_HEIGHT;
       
-      // Optional: Cap scale at 1.2 for desktop so it doesn't look too huge
-      if (newScale > 1.2) newScale = 1.2;
+      // Use the smaller scale factor to ensure the entire app fits on screen
+      const newScale = Math.min(scaleX, scaleY);
       
       setScale(newScale);
     };
@@ -397,7 +400,7 @@ const App: React.FC = () => {
   
   // Outer container is black background covering full screen
   return (
-    <div className="h-screen w-full bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
       {/* Defines Snow Animation */}
       <style>{`
         @keyframes snow {
@@ -411,11 +414,11 @@ const App: React.FC = () => {
       <div 
         style={{
           width: `${DESIGN_WIDTH}px`,
-          height: '100%', // Use full height, contents will manage overflow
+          height: `${DESIGN_HEIGHT}px`, // Fixed height guarantees ratio behavior
           transform: `scale(${scale})`,
-          transformOrigin: 'top center',
+          // Center origin ensures scaling stays centered
         }}
-        className="relative bg-gray-900 text-white flex flex-col items-center shadow-2xl overflow-hidden"
+        className="relative bg-gray-900 text-white flex flex-col items-center shadow-2xl overflow-hidden shrink-0"
       >
         
         {phase === GamePhase.INTRO && (
@@ -596,8 +599,8 @@ const App: React.FC = () => {
             >
               <FeedbackOverlay effects={effects} />
               
-              {/* Customer Queue (REDUCED HEIGHT to h-52) */}
-              <div className="bg-gray-200 rounded-lg border-4 border-gray-500 shadow-inner h-52 shrink-0 relative z-0">
+              {/* Customer Queue (Reduced height from h-52 to h-44 to prevent kitchen overlap) */}
+              <div className="bg-gray-200 rounded-lg border-4 border-gray-500 shadow-inner h-44 shrink-0 relative z-0">
                  <CustomerQueue customers={customers} onServe={handleServeCustomer} />
               </div>
 
