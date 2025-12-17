@@ -135,6 +135,7 @@ const App: React.FC = () => {
 
   // Handle Secret Click for Settings
   const handleSecretClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation(); // Prevent game start
     setSecretClickCount(prev => {
       const newCount = prev + 1;
@@ -639,12 +640,12 @@ const App: React.FC = () => {
                </div>
             </div>
             
-            {/* Secret Footer Trigger */}
+            {/* Secret Footer Trigger - Enhanced Touch Area */}
             <div 
-               className="absolute bottom-2 right-2 z-20 cursor-pointer pointer-events-auto active:scale-95 transition-transform"
+               className="absolute bottom-0 right-0 w-24 h-24 z-[100] flex items-end justify-end p-2 cursor-pointer"
                onClick={handleSecretClick}
             >
-               <div className="bg-yellow-100 px-2 py-0.5 border-2 border-red-500 rounded text-[8px] font-bold text-red-600 shadow-sm select-none">
+               <div className="bg-yellow-100 px-2 py-0.5 border-2 border-red-500 rounded text-[8px] font-bold text-red-600 shadow-sm select-none active:scale-90 transition-transform mb-2 mr-2">
                  1953 Studio
                </div>
             </div>
