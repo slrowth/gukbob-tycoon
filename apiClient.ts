@@ -1,7 +1,6 @@
 // Google Sheets API Client
 // Hardcoded with the provided URL for permanent connection.
 
-const STORAGE_KEY = '_sys_pref_v1';
 const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwcviVtE4MCeiRVSZhWS1YmNp39cCNZcFsgs_FAgAgKXo_Yw9hu3q_hHOc6tzq_PfNjwQ/exec';
 
 // Helper: Returns the hardcoded Google Script URL
