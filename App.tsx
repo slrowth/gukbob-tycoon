@@ -19,7 +19,6 @@ import {
   MASTER_POT_STIR_RECOVERY,
   MASTER_POT_WARNING_THRESHOLD,
   CUSTOMER_SPAWN_RATE,
-  SPAWN_RATE_INCREASE_PER_TICK,
   MAX_SPAWN_RATE,
   CUSTOMER_MAX_PATIENCE,
   CUSTOMER_PATIENCE_DECAY,
@@ -34,7 +33,8 @@ import {
   SCORE_PERFECT,
   SCORE_GOOD,
   SCORE_BAD,
-  BRAND_MESSAGES
+  BRAND_MESSAGES,
+  LEVEL_DURATION_TICKS
 } from './constants';
 
 import Stove from './components/Stove';
@@ -55,6 +55,7 @@ const DESIGN_HEIGHT = 800; // Fixed design height for safe area scaling
 const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>(GamePhase.INTRO);
   const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
   const [health, setHealth] = useState(START_HEALTH);
   const [masterPotHealth, setMasterPotHealth] = useState(100);
   const [brandMessage, setBrandMessage] = useState<string>(BRAND_MESSAGES.DEFAULT);
@@ -142,7 +143,23 @@ const App: React.FC = () => {
     if (phase !== GamePhase.PLAYING) return;
 
     const interval = setInterval(() => {
-      setGameTime(prev => prev + 1);
+      // Increment Game Time
+      let nextTime = 0;
+      setGameTime(prev => {
+        nextTime = prev + 1;
+        return nextTime;
+      });
+
+      // --- Level System ---
+      const calculatedLevel = Math.floor(nextTime / LEVEL_DURATION_TICKS) + 1;
+      // Difficulty Multiplier: 1.1^ (Level - 1) -> 10% compounded per level
+      const difficultyMultiplier = Math.pow(1.1, calculatedLevel - 1);
+
+      if (calculatedLevel > level) {
+        setLevel(calculatedLevel);
+        addEffect(`LEVEL ${calculatedLevel}!`, 'score', 'center', 'center');
+        setBrandMessage(`속도 증가! 레벨 ${calculatedLevel} 시작!`);
+      }
 
       // Check Health Death
       if (health <= 0 || masterPotHealth <= 0) {
@@ -153,14 +170,15 @@ const App: React.FC = () => {
       // 0. Natural Health Decay (increases with time)
       setHealth(prev => {
         // Base decay + extra decay based on how long game has been running
-        const decayAmount = HEALTH_DECAY_BASE + (gameTime * HEALTH_DECAY_RAMP);
+        const decayAmount = HEALTH_DECAY_BASE + (nextTime * HEALTH_DECAY_RAMP);
         return Math.max(0, prev - decayAmount);
       });
 
       // 1. Update Master Pot
+      // Decay scales with difficulty
       let warningTriggered = false;
       setMasterPotHealth(prev => {
-        const next = prev - MASTER_POT_DECAY;
+        const next = prev - (MASTER_POT_DECAY * difficultyMultiplier);
         if (next < MASTER_POT_WARNING_THRESHOLD && prev >= MASTER_POT_WARNING_THRESHOLD) {
            warningTriggered = true;
         }
@@ -227,9 +245,10 @@ const App: React.FC = () => {
 
       // 4. Update Customers & Spawn
       setCustomers(prevCustomers => {
+        // Patience decay scales with difficulty
         let updated = prevCustomers.map(c => ({
           ...c,
-          patience: c.patience - CUSTOMER_PATIENCE_DECAY
+          patience: c.patience - (CUSTOMER_PATIENCE_DECAY * difficultyMultiplier)
         }));
 
         const keptCustomers = [];
@@ -250,7 +269,8 @@ const App: React.FC = () => {
             addEffect(`-${HEALTH_DAMAGE_MISS} Reputation`, 'damage', 'center', 80);
         }
 
-        const currentSpawnRate = Math.min(MAX_SPAWN_RATE, CUSTOMER_SPAWN_RATE + (gameTime * SPAWN_RATE_INCREASE_PER_TICK));
+        // Spawn Rate scales with difficulty
+        const currentSpawnRate = Math.min(MAX_SPAWN_RATE, CUSTOMER_SPAWN_RATE * difficultyMultiplier);
         
         if (keptCustomers.length < 5 && Math.random() < currentSpawnRate) {
            const broths = Object.values(BrothType) as BrothType[];
@@ -271,7 +291,7 @@ const App: React.FC = () => {
     }, GAME_TICK_MS);
 
     return () => clearInterval(interval);
-  }, [phase, gameTime, health, masterPotHealth]);
+  }, [phase, gameTime, health, masterPotHealth, level]);
 
   // Actions
   const stirMasterPot = () => {
@@ -386,6 +406,7 @@ const App: React.FC = () => {
   const startActualGame = () => {
     setScore(0);
     setHealth(START_HEALTH);
+    setLevel(1);
     setMasterPotHealth(100);
     setGameTime(0);
     setGukbapPots(Array.from({ length: 9 }, (_, i) => ({ id: i, status: CookingStatus.EMPTY, brothType: null, progress: 0 })));
@@ -585,8 +606,13 @@ const App: React.FC = () => {
             <div className="w-full bg-gray-800 p-2 border-b-2 border-gray-600 z-10 shrink-0 flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <h1 className="text-lg font-bold text-white">1953형제돼지국밥</h1>
-                <div className="bg-black px-4 py-1 rounded text-yellow-400 font-mono text-xl border border-gray-600">
-                  ₩ {score.toLocaleString()}
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-yellow-500 font-bold bg-black border border-yellow-600 px-2 py-1 rounded">
+                    LV {level}
+                  </div>
+                  <div className="bg-black px-4 py-1 rounded text-yellow-400 font-mono text-xl border border-gray-600">
+                    ₩ {score.toLocaleString()}
+                  </div>
                 </div>
               </div>
               <ReputationBar health={health} />
