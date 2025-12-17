@@ -1,4 +1,5 @@
-// Google Sheets as a Database Client
+// Google Sheets API Client
+// Updated to remove any dependency on Supabase or unused variables.
 
 const STORAGE_KEY = '_sys_pref_v1';
 
@@ -42,8 +43,8 @@ export const submitScore = async (nickname: string, score: number) => {
   if (!url) return { success: false };
 
   try {
-    // Google Apps Script requires text/plain for CORS simple requests to avoid preflight issues
-    // We strictly do not assign the result to a variable to avoid TS unused variable errors
+    // Google Apps Script requires text/plain for CORS simple requests to avoid preflight issues.
+    // We explicitly use 'void' or just await without assignment to prevent TypeScript unused variable errors.
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors', // Important: Google Script opaque response
@@ -53,7 +54,7 @@ export const submitScore = async (nickname: string, score: number) => {
       body: JSON.stringify({ nickname, score })
     });
     
-    // Because of 'no-cors', we can't read the response body or status correctly in standard browser JS.
+    // Because of 'no-cors', we can't read the response body or status correctly.
     // We assume success if no network error occurred.
     return { success: true };
   } catch (error) {
