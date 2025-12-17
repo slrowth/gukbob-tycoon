@@ -43,7 +43,8 @@ export const submitScore = async (nickname: string, score: number) => {
 
   try {
     // Google Apps Script requires text/plain for CORS simple requests to avoid preflight issues
-    const response = await fetch(url, {
+    // We await the fetch but do not assign it to a variable since 'no-cors' gives an opaque response anyway
+    await fetch(url, {
       method: 'POST',
       mode: 'no-cors', // Important: Google Script opaque response
       headers: {
