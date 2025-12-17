@@ -27,14 +27,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   }, []);
 
   const handleSave = () => {
-    if (!url.trim() || !key.trim()) {
+    let cleanUrl = url.trim();
+    const cleanKey = key.trim();
+
+    if (!cleanUrl || !cleanKey) {
       alert("URL과 Key를 모두 입력해주세요.");
       return;
     }
 
+    // Auto-fix URL protocol to prevent 404
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
     // Obfuscate data before saving
     // We map 'u' and 'k' to save space and make it look less obvious
-    const config = { u: url.trim(), k: key.trim() };
+    const config = { u: cleanUrl, k: cleanKey };
     const jsonStr = JSON.stringify(config);
     const encoded = btoa(jsonStr); // Base64 Encode
 
