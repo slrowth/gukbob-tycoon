@@ -1,4 +1,4 @@
-// This file is deprecated as we switched to Google Sheets.
-// Keeping an empty file to prevent build errors if referenced implicitly, 
-// though it should be removed from the project if possible.
-export {};
+// This file is deprecated. 
+// If you see this file, it means it hasn't been deleted from the file system yet.
+// We export a dummy object to satisfy any lingering imports during transition.
+export const supabase = null;
