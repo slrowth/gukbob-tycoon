@@ -1,22 +1,12 @@
 // Google Sheets API Client
-// Updated to prevent caching and ensure real-time data retrieval.
+// Hardcoded with the provided URL for permanent connection.
 
 const STORAGE_KEY = '_sys_pref_v1';
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwcviVtE4MCeiRVSZhWS1YmNp39cCNZcFsgs_FAgAgKXo_Yw9hu3q_hHOc6tzq_PfNjwQ/exec';
 
-// Helper: Decode local storage to get the Google Script URL
+// Helper: Returns the hardcoded Google Script URL
 export const getApiConfig = () => {
-  if (typeof window === 'undefined') return '';
-  
-  try {
-    const encoded = localStorage.getItem(STORAGE_KEY);
-    if (!encoded) return '';
-    
-    const jsonStr = atob(encoded); 
-    const config = JSON.parse(jsonStr);
-    return config.url || '';
-  } catch (e) {
-    return '';
-  }
+  return HARDCODED_URL;
 };
 
 export const isApiConfigured = () => {
