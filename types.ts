@@ -55,3 +55,10 @@ export interface FeedbackEffect {
   text: string;
   type: 'score' | 'damage' | 'heal' | 'info';
 }
+
+export interface LeaderboardEntry {
+  id: number;
+  nickname: string;
+  score: number;
+  created_at: string;
+}

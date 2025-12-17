@@ -7,7 +7,8 @@ import {
   BrothType, 
   CookingStatus, 
   Inventory,
-  FeedbackEffect
+  FeedbackEffect,
+  LeaderboardEntry
 } from './types';
 import { 
   GAME_TICK_MS, 
@@ -36,6 +37,7 @@ import {
   BRAND_MESSAGES,
   LEVEL_DURATION_TICKS
 } from './constants';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 import Stove from './components/Stove';
 import RiceStation from './components/RiceStation';
@@ -46,8 +48,9 @@ import GameOverModal from './components/GameOverModal';
 import BrandTicker from './components/BrandTicker';
 import ReputationBar from './components/ReputationBar';
 import FeedbackOverlay from './components/FeedbackOverlay';
+import SettingsModal from './components/SettingsModal';
 import { CustomerAsset, MasterPotAsset } from './components/GameAssets';
-import { Menu } from 'lucide-react';
+import { Menu, Trophy, Wifi } from 'lucide-react';
 
 const DESIGN_WIDTH = 390;
 const DESIGN_HEIGHT = 800; // Fixed design height for safe area scaling
@@ -60,6 +63,10 @@ const App: React.FC = () => {
   const [masterPotHealth, setMasterPotHealth] = useState(100);
   const [brandMessage, setBrandMessage] = useState<string>(BRAND_MESSAGES.DEFAULT);
   const [gameTime, setGameTime] = useState(0);
+  const [topRankers, setTopRankers] = useState<LeaderboardEntry[]>([]);
+  const [isRankLoading, setIsRankLoading] = useState(false); // Add loading state
+  const [showSettings, setShowSettings] = useState(false);
+  const [secretClickCount, setSecretClickCount] = useState(0);
   
   // Mobile Scaling State
   const [scale, setScale] = useState(1);
@@ -105,6 +112,39 @@ const App: React.FC = () => {
     
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fetch Top 3 Rankers on Intro
+  useEffect(() => {
+    if (phase === GamePhase.INTRO && isSupabaseConfigured()) {
+       const fetchTopRankers = async () => {
+         setIsRankLoading(true);
+         const { data, error } = await supabase
+           .from('leaderboard')
+           .select('*')
+           .order('score', { ascending: false })
+           .limit(3);
+         
+         if (data) {
+           setTopRankers(data);
+         }
+         setIsRankLoading(false);
+       };
+       fetchTopRankers();
+    }
+  }, [phase]);
+
+  // Handle Secret Click for Settings
+  const handleSecretClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent game start
+    setSecretClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        setShowSettings(true);
+        return 0;
+      }
+      return newCount;
+    });
+  };
 
   // Helper to add floating effects
   const addEffect = (text: string, type: FeedbackEffect['type'], x: number | 'center', y: number | 'center') => {
@@ -154,11 +194,6 @@ const App: React.FC = () => {
       const calculatedLevel = Math.floor(nextTime / LEVEL_DURATION_TICKS) + 1;
       
       // Difficulty Multiplier: 1.2^ (Level - 1) -> 20% compounded per level
-      // Level 1: 1.0
-      // Level 2: 1.2
-      // Level 3: 1.44
-      // Level 4: 1.72
-      // Level 5: 2.07
       const difficultyMultiplier = Math.pow(1.2, calculatedLevel - 1);
 
       if (calculatedLevel > level) {
@@ -456,12 +491,14 @@ const App: React.FC = () => {
         
         {phase === GamePhase.INTRO && (
           <div 
-            onClick={goToStory}
-            className="flex flex-col items-center justify-between h-full w-full relative z-50 overflow-hidden cursor-pointer"
+            className="flex flex-col items-center justify-between h-full w-full relative z-50 overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 60%, #172554 100%)' // Night Sky Gradient
             }}
           >
+            {/* Click Handler for Starting Game (Avoid settings click) */}
+            <div className="absolute inset-0 z-0" onClick={goToStory} />
+
             {/* Falling Snow Effect */}
             <div className="absolute inset-0 z-0 pointer-events-none">
               {[...Array(30)].map((_, i) => (
@@ -493,12 +530,22 @@ const App: React.FC = () => {
             </div>
 
             {/* Header / Menu Icon */}
-            <div className="w-full flex justify-end p-4 z-10">
+            <div className="w-full flex justify-between p-4 z-20 pointer-events-none">
+              {/* Online Indicator */}
+              {isSupabaseConfigured() && (
+                 <div className="flex items-center gap-1 bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm border border-green-900">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></div>
+                    <span className="text-[10px] text-green-400 font-mono">ONLINE</span>
+                 </div>
+              )}
+              {/* Spacer if not online to keep layout */}
+              {!isSupabaseConfigured() && <div />}
+              
               <Menu className="text-white w-8 h-8 drop-shadow-lg" />
             </div>
 
             {/* Main Title Section */}
-            <div className="flex flex-col items-center z-10 mt-8 space-y-2">
+            <div className="flex flex-col items-center z-10 mt-8 space-y-2 pointer-events-none">
                {/* Ribbon Banner */}
                <div className="relative bg-red-600 text-white px-8 py-1 shadow-[0_4px_0_rgba(0,0,0,0.5)] transform -rotate-2 border-2 border-white mb-4">
                   <div className="absolute -left-2 top-0 bottom-0 w-2 bg-red-800 border-l-2 border-white skew-y-12 origin-right"></div>
@@ -521,11 +568,47 @@ const App: React.FC = () => {
                   </h1>
                   <div className="absolute -top-6 -right-6 text-5xl animate-[bounce_2s_infinite]">🔥</div>
                </div>
+               
+               {/* Top Rankers - Dynamic */}
+               <div className="mt-4 bg-black/60 backdrop-blur-sm border border-yellow-500/50 rounded-lg p-2 w-64 pointer-events-auto min-h-[80px] flex flex-col justify-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Trophy size={16} className="text-yellow-400" />
+                    <span className="text-yellow-400 font-bold text-xs tracking-widest">명예의 전당</span>
+                  </div>
+                  <div className="space-y-1">
+                    {isSupabaseConfigured() ? (
+                        isRankLoading ? (
+                          <div className="text-center text-xs text-gray-400 py-1 flex justify-center gap-1">
+                             <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
+                             <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                             <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                          </div>
+                        ) : topRankers.length > 0 ? (
+                            topRankers.map((ranker, i) => (
+                                <div key={i} className="flex justify-between text-xs text-white">
+                                <span className={`${i===0?'text-red-400 font-bold':''} ${i===1?'text-orange-300':''} ${i===2?'text-yellow-200':''}`}>
+                                    {i+1}. {ranker.nickname}
+                                </span>
+                                <span className="font-mono opacity-80">{ranker.score.toLocaleString()}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-2 animate-pulse">
+                                <p className="text-xs text-yellow-200 font-bold">첫 번째 주인공이 되어보세요!</p>
+                            </div>
+                        )
+                    ) : (
+                        <div className="text-center text-xs text-gray-500 py-1">
+                            랭킹 시스템 미연동
+                        </div>
+                    )}
+                  </div>
+               </div>
             </div>
 
             {/* Middle Action Text */}
-            <div className="z-10 mt-auto mb-10">
-              <div className="bg-black/40 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 animate-pulse cursor-pointer hover:scale-105 transition-transform">
+            <div className="z-10 mt-auto mb-10 pointer-events-none">
+              <div className="bg-black/40 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 animate-pulse">
                 <span className="text-white font-bold text-lg tracking-widest blink-text">
                   TOUCH TO START
                 </span>
@@ -533,7 +616,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Bottom Characters Assembly */}
-            <div className="w-full flex items-end justify-center z-10 mb-0 relative">
+            <div className="w-full flex items-end justify-center z-10 mb-0 relative pointer-events-none">
                {/* Floor Shadow */}
                <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-black to-transparent opacity-80"></div>
                
@@ -556,9 +639,12 @@ const App: React.FC = () => {
                </div>
             </div>
             
-            {/* Com2uS Platform Style Footer (Optional/Fake) */}
-            <div className="absolute bottom-2 right-2 z-20">
-               <div className="bg-yellow-100 px-2 py-0.5 border-2 border-red-500 rounded text-[8px] font-bold text-red-600 shadow-sm">
+            {/* Secret Footer Trigger */}
+            <div 
+               className="absolute bottom-2 right-2 z-20 cursor-pointer pointer-events-auto active:scale-95 transition-transform"
+               onClick={handleSecretClick}
+            >
+               <div className="bg-yellow-100 px-2 py-0.5 border-2 border-red-500 rounded text-[8px] font-bold text-red-600 shadow-sm select-none">
                  1953 Studio
                </div>
             </div>
@@ -676,6 +762,9 @@ const App: React.FC = () => {
             )}
           </>
         )}
+
+        {/* Settings Modal Layer */}
+        {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       </div>
     </div>
   );
