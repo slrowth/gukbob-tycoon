@@ -50,7 +50,7 @@ import ReputationBar from './components/ReputationBar';
 import FeedbackOverlay from './components/FeedbackOverlay';
 import SettingsModal from './components/SettingsModal';
 import { CustomerAsset, MasterPotAsset } from './components/GameAssets';
-import { Menu, Trophy, Wifi } from 'lucide-react';
+import { Menu, Trophy } from 'lucide-react';
 
 const DESIGN_WIDTH = 390;
 const DESIGN_HEIGHT = 800; // Fixed design height for safe area scaling
@@ -66,7 +66,7 @@ const App: React.FC = () => {
   const [topRankers, setTopRankers] = useState<LeaderboardEntry[]>([]);
   const [isRankLoading, setIsRankLoading] = useState(false); // Add loading state
   const [showSettings, setShowSettings] = useState(false);
-  const [secretClickCount, setSecretClickCount] = useState(0);
+  const [, setSecretClickCount] = useState(0);
   
   // Mobile Scaling State
   const [scale, setScale] = useState(1);
@@ -118,7 +118,7 @@ const App: React.FC = () => {
     if (phase === GamePhase.INTRO && isSupabaseConfigured()) {
        const fetchTopRankers = async () => {
          setIsRankLoading(true);
-         const { data, error } = await supabase
+         const { data } = await supabase
            .from('leaderboard')
            .select('*')
            .order('score', { ascending: false })
@@ -659,41 +659,6 @@ const App: React.FC = () => {
                 50% { opacity: 0.3; }
               }
             `}</style>
-          </div>
-        )}
-
-        {phase === GamePhase.STORY && (
-          <div className="flex flex-col items-center justify-center h-full w-full bg-black text-white p-6 animate-fadeIn absolute inset-0 z-50">
-             <div className="max-w-md w-full flex flex-col items-center gap-6">
-                <h2 className="text-2xl font-bold text-yellow-500 mb-4 tracking-widest">PROLOGUE</h2>
-                
-                <div className="flex justify-center gap-8 mb-4">
-                   <div className="w-24 h-24">
-                     <CustomerAsset seed={1} mood='normal' />
-                   </div>
-                   <div className="w-24 h-24">
-                     <CustomerAsset seed={3} mood='normal' />
-                   </div>
-                </div>
-
-                <div className="bg-gray-800 border-2 border-white p-4 rounded-lg relative w-full">
-                  <div className="absolute -top-3 left-4 bg-gray-800 px-2 text-yellow-400 font-bold border border-white">
-                    형제들
-                  </div>
-                  <p className="text-lg leading-relaxed font-mono">
-                    "70년 전 1953년부터 지켜온<br/>
-                    <span className="text-red-400 font-bold">할머니의 맛</span>을<br/>
-                    우리가 정성껏 지켜보겠어!"
-                  </p>
-                </div>
-
-                <button 
-                  onClick={startActualGame}
-                  className="mt-8 bg-white text-black px-8 py-3 text-xl font-bold rounded hover:bg-gray-300 pixel-btn animate-bounce"
-                >
-                  장사 시작!
-                </button>
-             </div>
           </div>
         )}
 

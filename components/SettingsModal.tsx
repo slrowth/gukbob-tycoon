@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Trash2, Database, ShieldCheck } from 'lucide-react';
+import { X, Save, Trash2, ShieldCheck } from 'lucide-react';
 
 interface SettingsModalProps {
   onClose: () => void;
