@@ -12,9 +12,9 @@ const MasterPot: React.FC<MasterPotProps> = ({ health, onStir }) => {
   const needsStirring = health < MASTER_POT_WARNING_THRESHOLD;
 
   return (
-    <div className="relative flex flex-col items-center justify-end w-32 h-40 shrink-0">
+    <div className="relative flex flex-col items-center justify-end w-32 h-28 shrink-0">
       {/* Label */}
-      <div className="absolute top-0 text-xs text-yellow-100 bg-red-900 px-2 py-1 rounded border border-yellow-600 z-10 shadow-md whitespace-nowrap">
+      <div className="absolute top-0 text-[10px] text-yellow-100 bg-red-900 px-2 py-0.5 rounded border border-yellow-600 z-10 shadow-md whitespace-nowrap">
         진한 사골육수
       </div>
 
@@ -37,7 +37,7 @@ const MasterPot: React.FC<MasterPotProps> = ({ health, onStir }) => {
       ) : (
         // Optional visual indicator that it's okay (or just nothing)
         <div className="absolute -right-2 bottom-10 opacity-50">
-           <span className="text-xs text-green-400 font-mono">OK...</span>
+           <span className="text-[10px] text-green-400 font-mono">OK...</span>
         </div>
       )}
     </div>

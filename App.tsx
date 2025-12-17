@@ -46,8 +46,10 @@ import GameOverModal from './components/GameOverModal';
 import BrandTicker from './components/BrandTicker';
 import ReputationBar from './components/ReputationBar';
 import FeedbackOverlay from './components/FeedbackOverlay';
-import { CustomerAsset } from './components/GameAssets';
-import { Play } from 'lucide-react';
+import { CustomerAsset, MasterPotAsset } from './components/GameAssets';
+import { Play, Menu } from 'lucide-react';
+
+const DESIGN_WIDTH = 390; // Standard mobile width base
 
 const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>(GamePhase.INTRO);
@@ -56,6 +58,9 @@ const App: React.FC = () => {
   const [masterPotHealth, setMasterPotHealth] = useState(100);
   const [brandMessage, setBrandMessage] = useState<string>(BRAND_MESSAGES.DEFAULT);
   const [gameTime, setGameTime] = useState(0);
+  
+  // Mobile Scaling State
+  const [scale, setScale] = useState(1);
   
   // Visual Effects State
   const [effects, setEffects] = useState<FeedbackEffect[]>([]);
@@ -77,19 +82,43 @@ const App: React.FC = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Handle Resize for Scale-to-Fit
+  useEffect(() => {
+    const handleResize = () => {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      // Calculate scale to fit width, but verify height fits too if possible
+      let newScale = windowWidth / DESIGN_WIDTH;
+      
+      // Optional: Cap scale at 1.2 for desktop so it doesn't look too huge
+      if (newScale > 1.2) newScale = 1.2;
+      
+      setScale(newScale);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Init
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Helper to add floating effects
-  // Now accepts optional clientX/clientY to calculate position relative to container
   const addEffect = (text: string, type: FeedbackEffect['type'], x: number | 'center', y: number | 'center') => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     
+    // We need to adjust coordinates because of the scaling transform
+    // The incoming X/Y might be based on screen coordinates or scaled coordinates.
+    // For simplicity in this logic, we assume we are working within the 390px coordinate space.
+    
     let effectX = 0;
     let effectY = 0;
 
-    if (x === 'center') effectX = rect.width / 2;
+    if (x === 'center') effectX = DESIGN_WIDTH / 2;
     else effectX = x;
 
-    if (y === 'center') effectY = rect.height / 2;
+    if (y === 'center') effectY = containerRef.current.offsetHeight / 2;
     else effectY = y;
 
     const newEffect: FeedbackEffect = {
@@ -297,13 +326,14 @@ const App: React.FC = () => {
     const hasSoup = inventory[broth] > 0;
     const hasRice = !needsRice || inventory.rice > 0;
 
-    // Calculate effect position based on click target
+    // Calculate click position relative to the SCALED container
     const rect = event.currentTarget.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
     
-    // Position relative to the container
-    const x = rect.left - containerRect.left + (rect.width / 2);
-    const y = rect.top - containerRect.top;
+    // We adjust the coordinates to match the internal 390px design width space
+    // Since everything is visually scaled, we reverse the scale to find the "logical" x/y
+    const x = (rect.left - containerRect.left + (rect.width / 2)) / scale;
+    const y = (rect.top - containerRect.top) / scale;
 
     if (hasSoup && hasRice) {
       setInventory(prev => ({
@@ -361,150 +391,226 @@ const App: React.FC = () => {
     setPhase(GamePhase.PLAYING);
   };
 
-  if (phase === GamePhase.INTRO) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-orange-50 text-center p-6 space-y-8">
-        <div className="bg-white p-8 rounded-xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-sm">
-           <div className="flex flex-col items-center mb-6">
-             <span className="text-xl font-bold text-gray-800 mb-2">1953형제돼지국밥</span>
-             <h1 className="text-5xl font-black tracking-widest leading-normal" style={{
-               background: 'linear-gradient(180deg, #FCD34D 0%, #EA580C 100%)',
-               WebkitBackgroundClip: 'text',
-               WebkitTextFillColor: 'transparent',
-               filter: 'drop-shadow(3px 3px 0px #000000)'
-             }}>
-               국밥 타이쿤
-             </h1>
-           </div>
-           
-           <p className="text-sm text-gray-800 mb-6">형제돼지국밥의 전통을 이어가세요!</p>
-           
-           <div className="text-left text-xs bg-gray-100 p-4 rounded mb-6 space-y-2 border border-gray-300">
-             <p>1. <span className="font-bold text-red-600">진한 사골육수</span>를 틈틈히 정성스레 저어주세요.</p>
-             <p>2. 손님에게 빠르게 서빙하여 <span className="font-bold text-green-600">신뢰도</span>를 유지하세요.</p>
-             <p>3. <span className="font-bold text-red-600">시간이 지날수록 신뢰도는 더 빨리 떨어집니다!</span></p>
-           </div>
-
-           <button 
-             onClick={goToStory}
-             className="w-full bg-gray-900 border-4 border-gray-600 py-6 rounded-lg hover:bg-gray-800 active:translate-y-1 transition-all flex items-center justify-center gap-3 group relative overflow-hidden pixel-btn"
-           >
-             {/* Retro Shine Effect */}
-             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[shine_1s_infinite]"></div>
-
-             <Play size={32} className="text-yellow-500 fill-yellow-500" />
-             <span className="text-4xl font-black tracking-widest" style={{
-               background: 'linear-gradient(180deg, #FCD34D 0%, #EA580C 100%)',
-               WebkitBackgroundClip: 'text',
-               WebkitTextFillColor: 'transparent',
-               filter: 'drop-shadow(2px 2px 0px #000000)'
-             }}>
-               영업 시작
-             </span>
-           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === GamePhase.STORY) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-black text-white p-6 animate-fadeIn">
-         <div className="max-w-md w-full flex flex-col items-center gap-6">
-            <h2 className="text-2xl font-bold text-yellow-500 mb-4 tracking-widest">PROLOGUE</h2>
-            
-            <div className="flex justify-center gap-8 mb-4">
-               {/* Brother 1 */}
-               <div className="w-24 h-24">
-                 <CustomerAsset seed={1} mood='normal' />
-               </div>
-               {/* Brother 2 */}
-               <div className="w-24 h-24">
-                 <CustomerAsset seed={3} mood='normal' />
-               </div>
-            </div>
-
-            <div className="bg-gray-800 border-2 border-white p-4 rounded-lg relative w-full">
-              <div className="absolute -top-3 left-4 bg-gray-800 px-2 text-yellow-400 font-bold border border-white">
-                형제들
-              </div>
-              <p className="text-lg leading-relaxed font-mono">
-                "70년 전 1953년부터 지켜온<br/>
-                <span className="text-red-400 font-bold">할머니의 맛</span>을<br/>
-                우리가 정성껏 지켜보겠어!"
-              </p>
-            </div>
-
-            <button 
-              onClick={startActualGame}
-              className="mt-8 bg-white text-black px-8 py-3 text-xl font-bold rounded hover:bg-gray-300 pixel-btn animate-bounce"
-            >
-              장사 시작!
-            </button>
-         </div>
-      </div>
-    );
-  }
-
+  // --- RENDERING ---
+  
+  // Outer container is black background covering full screen
   return (
-    <div className="h-screen w-full bg-gray-900 text-white overflow-hidden flex flex-col items-center">
+    <div className="h-screen w-full bg-black flex items-center justify-center overflow-hidden">
       
-      {/* 1. Header Area */}
-      <div className="w-full max-w-md bg-gray-800 p-2 border-b-2 border-gray-600 z-10 shrink-0 flex flex-col gap-2">
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg font-bold text-white">1953형제돼지국밥</h1>
-          <div className="bg-black px-4 py-1 rounded text-yellow-400 font-mono text-xl border border-gray-600">
-            ₩ {score.toLocaleString()}
-          </div>
-        </div>
-        <ReputationBar health={health} />
-      </div>
-
-      {/* 2. Main Game Area */}
+      {/* Scaled Inner Container */}
       <div 
-        ref={containerRef}
-        className="flex-1 w-full max-w-md bg-gray-800/50 relative flex flex-col p-2 gap-2 min-h-0 overflow-hidden"
+        style={{
+          width: `${DESIGN_WIDTH}px`,
+          height: '100%', // Use full height, contents will manage overflow
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+        }}
+        className="relative bg-gray-900 text-white flex flex-col items-center shadow-2xl overflow-hidden"
       >
-        <FeedbackOverlay effects={effects} />
         
-        {/* Customer Queue - Increased Height */}
-        <div className="bg-gray-200 rounded-lg border-4 border-gray-500 shadow-inner h-48 shrink-0 relative z-0">
-           <CustomerQueue customers={customers} onServe={handleServeCustomer} />
-        </div>
+        {phase === GamePhase.INTRO && (
+          <div 
+            onClick={goToStory}
+            className="flex flex-col items-center justify-between h-full w-full relative z-50 overflow-hidden cursor-pointer"
+            style={{
+              background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 60%, #172554 100%)' // Night Sky Gradient
+            }}
+          >
+            {/* Background City Skyline (Abstract) */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+               {/* Stars */}
+               <div className="absolute top-10 left-10 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+               <div className="absolute top-20 right-20 w-1 h-1 bg-white rounded-full animate-[pulse_1.5s_infinite]"></div>
+               <div className="absolute top-40 left-1/2 w-1 h-1 bg-white rounded-full animate-[pulse_2s_infinite]"></div>
+               <div className="absolute top-10 right-40 w-0.5 h-0.5 bg-white rounded-full"></div>
+               
+               {/* Buildings */}
+               <div className="absolute bottom-0 left-0 w-16 h-48 bg-black/60 border-t border-r border-indigo-900"></div>
+               <div className="absolute bottom-0 left-12 w-20 h-64 bg-black/50 border-t border-x border-indigo-800 flex flex-col items-center pt-4 gap-4">
+                  <div className="w-2 h-2 bg-yellow-900/50 rounded-full"></div>
+                  <div className="w-2 h-2 bg-yellow-900/50 rounded-full"></div>
+               </div>
+               <div className="absolute bottom-0 right-0 w-24 h-56 bg-black/60 border-t border-l border-indigo-900"></div>
+               <div className="absolute bottom-0 right-20 w-16 h-32 bg-black/50 border-t border-x border-indigo-800"></div>
+            </div>
 
-        {/* Inventory */}
-        <div className="shrink-0">
-          <InventoryDisplay inventory={inventory} />
-        </div>
+            {/* Header / Menu Icon */}
+            <div className="w-full flex justify-end p-4 z-10">
+              <Menu className="text-white w-8 h-8 drop-shadow-lg" />
+            </div>
 
-        {/* Kitchen (Pots & Stations) */}
-        {/* items-stretch ensures columns (especially stove and rice) match height */}
-        <div className="flex flex-1 gap-2 min-h-0 mt-2 items-stretch">
-          
-          {/* Left Column: Ticker & Master Pot */}
-          <div className="flex flex-col justify-end shrink-0 relative w-32">
-             <BrandTicker message={brandMessage} />
-             <MasterPot health={masterPotHealth} onStir={stirMasterPot} />
+            {/* Main Title Section */}
+            <div className="flex flex-col items-center z-10 mt-8 space-y-2">
+               {/* Ribbon Banner */}
+               <div className="relative bg-red-600 text-white px-8 py-1 shadow-[0_4px_0_rgba(0,0,0,0.5)] transform -rotate-2 border-2 border-white mb-2">
+                  <div className="absolute -left-2 top-0 bottom-0 w-2 bg-red-800 border-l-2 border-white skew-y-12 origin-right"></div>
+                  <div className="absolute -right-2 top-0 bottom-0 w-2 bg-red-800 border-r-2 border-white -skew-y-12 origin-left"></div>
+                  <span className="text-xl font-black tracking-widest drop-shadow-md font-mono">SINCE 1953</span>
+               </div>
+               
+               <p className="text-yellow-300 text-sm font-bold tracking-tighter drop-shadow-md animate-pulse">
+                 오리지널 국밥 타이쿤의 귀환
+               </p>
+               
+               {/* Main Logo */}
+               <div className="text-center relative">
+                  <h1 className="text-6xl font-black tracking-tighter leading-none relative z-10" style={{
+                     color: '#fef3c7', // light yellow
+                     WebkitTextStroke: '2px #78350f', // dark brown stroke
+                     textShadow: '4px 4px 0px #000, 4px 6px 0px #78350f'
+                  }}>
+                    국밥<br/>타이쿤
+                  </h1>
+                  <div className="absolute -top-6 -right-6 text-4xl animate-[bounce_2s_infinite]">🔥</div>
+               </div>
+            </div>
+
+            {/* Middle Action Text */}
+            <div className="z-10 mt-auto mb-10">
+              <div className="bg-black/40 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 animate-pulse">
+                <span className="text-white font-bold text-lg tracking-widest blink-text">
+                  TOUCH TO START
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom Characters Assembly */}
+            <div className="w-full flex items-end justify-center z-10 mb-0 relative">
+               {/* Floor Shadow */}
+               <div className="absolute bottom-0 w-full h-12 bg-gradient-to-t from-black to-transparent opacity-80"></div>
+               
+               {/* Left Group */}
+               <div className="w-24 h-24 -mr-6 mb-2 transform scale-90 z-10">
+                 <CustomerAsset seed={3} mood='happy' />
+               </div>
+               
+               {/* Center Pot (The "Cart") */}
+               <div className="w-40 h-36 z-20 relative -mb-4 drop-shadow-2xl transform scale-110">
+                  <MasterPotAsset health={80} />
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-bold px-2 py-0.5 border border-black rounded shadow-md whitespace-nowrap">
+                    형제국밥
+                  </div>
+               </div>
+               
+               {/* Right Group */}
+               <div className="w-24 h-24 -ml-6 mb-2 transform scale-90 scale-x-[-1] z-10">
+                 <CustomerAsset seed={1} mood='happy' />
+               </div>
+            </div>
+            
+            {/* Com2uS Platform Style Footer (Optional/Fake) */}
+            <div className="absolute bottom-2 right-2 z-20">
+               <div className="bg-yellow-100 px-2 py-0.5 border-2 border-red-500 rounded text-[8px] font-bold text-red-600 shadow-sm">
+                 1953 Studio
+               </div>
+            </div>
+
+            <style>{`
+              .blink-text {
+                animation: blink 1s infinite;
+              }
+              @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.3; }
+              }
+            `}</style>
           </div>
+        )}
 
-          {/* Stove - Center (Fills space) */}
-          <div className="flex-1 flex flex-col min-h-0 relative">
-             <Stove pots={gukbapPots} onInteract={handleGukbapInteract} />
-          </div>
+        {phase === GamePhase.STORY && (
+          <div className="flex flex-col items-center justify-center h-full w-full bg-black text-white p-6 animate-fadeIn absolute inset-0 z-50">
+             <div className="max-w-md w-full flex flex-col items-center gap-6">
+                <h2 className="text-2xl font-bold text-yellow-500 mb-4 tracking-widest">PROLOGUE</h2>
+                
+                <div className="flex justify-center gap-8 mb-4">
+                   <div className="w-24 h-24">
+                     <CustomerAsset seed={1} mood='normal' />
+                   </div>
+                   <div className="w-24 h-24">
+                     <CustomerAsset seed={3} mood='normal' />
+                   </div>
+                </div>
 
-          {/* Rice - Right */}
-          <div className="w-20 shrink-0">
-             <RiceStation pots={ricePots} onInteract={handleRiceInteract} />
+                <div className="bg-gray-800 border-2 border-white p-4 rounded-lg relative w-full">
+                  <div className="absolute -top-3 left-4 bg-gray-800 px-2 text-yellow-400 font-bold border border-white">
+                    형제들
+                  </div>
+                  <p className="text-lg leading-relaxed font-mono">
+                    "70년 전 1953년부터 지켜온<br/>
+                    <span className="text-red-400 font-bold">할머니의 맛</span>을<br/>
+                    우리가 정성껏 지켜보겠어!"
+                  </p>
+                </div>
+
+                <button 
+                  onClick={startActualGame}
+                  className="mt-8 bg-white text-black px-8 py-3 text-xl font-bold rounded hover:bg-gray-300 pixel-btn animate-bounce"
+                >
+                  장사 시작!
+                </button>
+             </div>
           </div>
-        </div>
+        )}
+
+        {/* --- MAIN GAME UI --- */}
+        {/* Only rendered if not in Intro/Story to keep DOM lighter, or keep it hidden */}
+        {(phase === GamePhase.PLAYING || phase === GamePhase.GAMEOVER) && (
+          <>
+            {/* 1. Header Area */}
+            <div className="w-full bg-gray-800 p-2 border-b-2 border-gray-600 z-10 shrink-0 flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <h1 className="text-lg font-bold text-white">1953형제돼지국밥</h1>
+                <div className="bg-black px-4 py-1 rounded text-yellow-400 font-mono text-xl border border-gray-600">
+                  ₩ {score.toLocaleString()}
+                </div>
+              </div>
+              <ReputationBar health={health} />
+            </div>
+
+            {/* 2. Main Game Area */}
+            <div 
+              ref={containerRef}
+              className="flex-1 w-full relative flex flex-col p-2 gap-2 min-h-0 overflow-hidden bg-gray-800/50"
+            >
+              <FeedbackOverlay effects={effects} />
+              
+              {/* Customer Queue (REDUCED HEIGHT to h-52) */}
+              <div className="bg-gray-200 rounded-lg border-4 border-gray-500 shadow-inner h-52 shrink-0 relative z-0">
+                 <CustomerQueue customers={customers} onServe={handleServeCustomer} />
+              </div>
+
+              {/* Inventory */}
+              <div className="shrink-0">
+                <InventoryDisplay inventory={inventory} />
+              </div>
+
+              {/* Kitchen */}
+              <div className="flex flex-1 gap-2 min-h-0 mt-2 items-stretch">
+                {/* Left: Ticker & Master Pot */}
+                <div className="flex flex-col justify-end shrink-0 relative w-32">
+                   <BrandTicker message={brandMessage} />
+                   <MasterPot health={masterPotHealth} onStir={stirMasterPot} />
+                </div>
+                {/* Center: Stove */}
+                <div className="flex-1 flex flex-col min-h-0 relative">
+                   <Stove pots={gukbapPots} onInteract={handleGukbapInteract} />
+                </div>
+                {/* Right: Rice */}
+                <div className="w-20 shrink-0">
+                   <RiceStation pots={ricePots} onInteract={handleRiceInteract} />
+                </div>
+              </div>
+            </div>
+            
+            {/* 3. Footer Spacer */}
+            <div className="w-full shrink-0 h-4 bg-gray-800 border-t border-gray-700"></div>
+
+            {phase === GamePhase.GAMEOVER && (
+              <GameOverModal score={score} onRestart={startActualGame} />
+            )}
+          </>
+        )}
       </div>
-      
-      {/* 3. Footer Spacer (since ticker moved) */}
-      <div className="w-full max-w-md shrink-0 h-4 bg-gray-800 border-t border-gray-700"></div>
-
-      {phase === GamePhase.GAMEOVER && (
-        <GameOverModal score={score} onRestart={startActualGame} />
-      )}
     </div>
   );
 };

@@ -29,13 +29,13 @@ const Stove: React.FC<StoveProps> = ({ pots, onInteract }) => {
 
   return (
     <div className="flex flex-col h-full bg-gray-800 p-2 rounded-lg border-4 border-gray-600 relative shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-      {/* Header Label */}
-      <div className="text-center text-xs text-white bg-gray-700/80 rounded py-1 mb-2 font-bold shadow-sm border border-gray-500">
+      {/* Header Label - Compact */}
+      <div className="text-center text-[10px] text-white bg-gray-700/80 rounded py-0.5 mb-1 font-bold shadow-sm border border-gray-500">
         국밥 조리대
       </div>
 
       {/* Grid Container */}
-      <div className="grid grid-cols-3 gap-2 flex-1 relative content-start overflow-y-auto no-scrollbar">
+      <div className="grid grid-cols-3 gap-1 flex-1 relative content-start overflow-y-auto no-scrollbar">
         {/* Broth Selection Modal Overlay */}
         {selectedPotId !== null && (
           <div className="absolute inset-0 bg-black/90 z-20 flex flex-col items-center justify-center p-2 rounded backdrop-blur-sm border-2 border-white/20">
@@ -80,7 +80,7 @@ const Stove: React.FC<StoveProps> = ({ pots, onInteract }) => {
                 ${isDone ? 'ring-4 ring-red-500 ring-inset animate-[pulse_0.5s_infinite]' : ''}
                 ${isBurnt ? 'ring-4 ring-gray-900 ring-inset' : ''}
               `}
-              style={{ minHeight: '60px' }}
+              style={{ minHeight: '44px' }}
             >
                <div className="w-full h-full p-1">
                  <GukbapAsset 

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <title>1953 국밥 타이쿤</title>
-    <!-- Tailwind CSS (Keep CDN for simplicity in this setup, or move to PostCSS later) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,13 +12,17 @@
     <style>
       body {
         font-family: 'DotGothic16', sans-serif;
-        background-color: #1a1a1a;
+        background-color: #000000;
         touch-action: manipulation;
         overflow: hidden;
       }
       
       #root {
         height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
 
       .pixel-btn:active {
@@ -35,12 +39,12 @@
   <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "vite": "https://esm.sh/vite@^7.3.0"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>
