@@ -4,9 +4,10 @@ import { RotateCcw } from 'lucide-react';
 interface GameOverModalProps {
   score: number;
   onRestart: () => void;
+  onHome: () => void;
 }
 
-const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart }) => {
+const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome }) => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -18,27 +19,69 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart }) => {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
-      <div className="bg-white w-full max-w-md p-6 rounded-lg border-4 border-red-600 shadow-2xl text-center">
-        <h2 className="text-5xl font-black tracking-widest mb-4 leading-normal" style={{
-            background: 'linear-gradient(180deg, #EF4444 0%, #991B1B 100%)', // Red gradient for Game Over
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(3px 3px 0px #000000)'
-          }}>
-          영업 종료!
-        </h2>
-        <p className="text-gray-800 mb-6 font-bold">육수가 타버렸거나 손님이 화가 났어요.</p>
+    <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
+      {/* Background with Night Gradient matching Intro */}
+      <div 
+        className="absolute inset-0 bg-black/95 z-0"
+        style={{
+          background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 60%, #172554 100%)' // Night Sky Gradient
+        }}
+      >
+        {/* Snow Effect for consistency */}
+        <div className="absolute inset-0 pointer-events-none opacity-50">
+          {[...Array(20)].map((_, i) => (
+            <div 
+              key={i}
+              className="absolute bg-white rounded-full opacity-0"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `-${Math.random() * 20}px`,
+                width: `${Math.random() * 2 + 2}px`,
+                height: `${Math.random() * 2 + 2}px`,
+                animation: `snow ${Math.random() * 2 + 2}s linear infinite`,
+                animationDelay: `${Math.random() * 2}s`
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Defines Snow Animation locally if not inherited, though App.tsx has it global style usually */}
+      <style>{`
+        @keyframes snow {
+          0% { transform: translateY(-10px); opacity: 0; }
+          20% { opacity: 0.8; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+      `}</style>
+
+      {/* Main Modal Card - Retro Style */}
+      <div className="relative z-10 w-full max-w-sm p-6 mx-4 bg-orange-50 rounded-xl border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,0.5)] text-center">
+        {/* Header Ribbon */}
+        <div className="relative -top-10 mb-[-20px]">
+           <div className="bg-red-600 text-white py-2 px-6 inline-block border-2 border-white shadow-md transform -rotate-2">
+              <h2 className="text-4xl font-black tracking-widest drop-shadow-md">영업 종료!</h2>
+           </div>
+        </div>
+
+        <p className="text-gray-800 mb-6 font-bold mt-4">
+           오늘의 장사가 끝났습니다.<br/>
+           <span className="text-xs text-red-600">육수가 탔거나 손님이 화났어요!</span>
+        </p>
         
-        <div className="bg-yellow-100 p-4 rounded-lg border-2 border-yellow-400 mb-6">
-          <p className="text-sm text-yellow-800 font-bold">최종 매출</p>
-          <p className="text-4xl font-black text-yellow-900 drop-shadow-sm">₩ {score.toLocaleString()}</p>
+        {/* Score Board */}
+        <div className="bg-gray-800 p-4 rounded-lg border-4 border-gray-600 mb-6 shadow-inner relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/5 pointer-events-none"></div>
+          <p className="text-xs text-gray-400 font-bold mb-1">FINAL SCORE</p>
+          <p className="text-4xl font-black text-yellow-400 font-mono tracking-widest drop-shadow-[2px_2px_0_#000]">
+            ₩ {score.toLocaleString()}
+          </p>
         </div>
 
         {!submitted ? (
-          <form onSubmit={handleSubmit} className="mb-6 text-left">
+          <form onSubmit={handleSubmit} className="mb-6 text-left bg-white p-3 rounded border-2 border-gray-200">
             <label className="block text-xs font-bold text-gray-700 mb-1">
-              랭킹 등록 & 이벤트 참여 (이메일)
+              랭킹 등록 (이메일)
             </label>
             <div className="flex gap-2">
               <input 
@@ -46,19 +89,16 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart }) => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 border-2 border-gray-300 rounded px-3 py-2 text-sm focus:border-red-500 outline-none font-sans"
+                className="flex-1 border-2 border-gray-300 rounded px-2 py-2 text-sm focus:border-red-500 outline-none font-sans bg-gray-50"
                 placeholder="example@email.com"
               />
               <button 
                 type="submit"
-                className="bg-red-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-red-700 pixel-btn shadow-md"
+                className="bg-black text-white px-3 py-2 rounded font-bold text-sm hover:bg-gray-800 pixel-btn"
               >
                 등록
               </button>
             </div>
-            <p className="text-[10px] text-gray-500 mt-1">
-              * 1953형제돼지국밥의 프로모션 소식을 받아보세요.
-            </p>
           </form>
         ) : (
           <div className="bg-green-100 text-green-800 p-3 rounded mb-6 text-sm font-bold border border-green-300">
@@ -66,22 +106,23 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart }) => {
           </div>
         )}
 
+        {/* Restart Button */}
         <button 
           onClick={onRestart}
           className="w-full bg-gray-900 border-4 border-gray-600 py-4 rounded-lg hover:bg-gray-800 active:translate-y-1 transition-all flex items-center justify-center gap-3 group relative overflow-hidden pixel-btn"
         >
-           {/* Retro Shine Effect */}
            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[shine_1s_infinite]"></div>
-           
-           <RotateCcw size={28} className="text-yellow-500" />
-           <span className="text-3xl font-black tracking-widest" style={{
-             background: 'linear-gradient(180deg, #FCD34D 0%, #EA580C 100%)',
-             WebkitBackgroundClip: 'text',
-             WebkitTextFillColor: 'transparent',
-             filter: 'drop-shadow(2px 2px 0px #000000)'
-           }}>
+           <RotateCcw size={24} className="text-yellow-500" />
+           <span className="text-2xl font-black tracking-widest text-yellow-500 drop-shadow-md">
              다시 장사하기
            </span>
+        </button>
+
+        <button 
+          onClick={onHome}
+          className="mt-4 text-xs font-bold text-gray-500 hover:text-black hover:underline transition-colors"
+        >
+          메인 화면으로 돌아가기
         </button>
       </div>
     </div>

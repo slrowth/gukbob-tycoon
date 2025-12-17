@@ -378,6 +378,10 @@ const App: React.FC = () => {
     setPhase(GamePhase.STORY);
   };
 
+  const goToTitle = () => {
+    setPhase(GamePhase.INTRO);
+  };
+
   const startActualGame = () => {
     setScore(0);
     setHealth(START_HEALTH);
@@ -396,7 +400,15 @@ const App: React.FC = () => {
   // Outer container is black background covering full screen
   return (
     <div className="h-screen w-full bg-black flex items-center justify-center overflow-hidden">
-      
+      {/* Defines Snow Animation */}
+      <style>{`
+        @keyframes snow {
+          0% { transform: translateY(-10px); opacity: 0; }
+          20% { opacity: 0.8; }
+          100% { transform: translateY(110vh); opacity: 0; }
+        }
+      `}</style>
+
       {/* Scaled Inner Container */}
       <div 
         style={{
@@ -416,19 +428,31 @@ const App: React.FC = () => {
               background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 60%, #172554 100%)' // Night Sky Gradient
             }}
           >
+            {/* Falling Snow Effect */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+              {[...Array(30)].map((_, i) => (
+                <div 
+                  key={i}
+                  className="absolute bg-white rounded-full opacity-0"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `-${Math.random() * 20}px`,
+                    width: `${Math.random() * 3 + 2}px`,
+                    height: `${Math.random() * 3 + 2}px`,
+                    animation: `snow ${Math.random() * 3 + 3}s linear infinite`,
+                    animationDelay: `${Math.random() * 5}s`
+                  }}
+                />
+              ))}
+            </div>
+
             {/* Background City Skyline (Abstract) */}
             <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
-               {/* Stars */}
-               <div className="absolute top-10 left-10 w-1 h-1 bg-white rounded-full animate-pulse"></div>
-               <div className="absolute top-20 right-20 w-1 h-1 bg-white rounded-full animate-[pulse_1.5s_infinite]"></div>
-               <div className="absolute top-40 left-1/2 w-1 h-1 bg-white rounded-full animate-[pulse_2s_infinite]"></div>
-               <div className="absolute top-10 right-40 w-0.5 h-0.5 bg-white rounded-full"></div>
-               
                {/* Buildings */}
                <div className="absolute bottom-0 left-0 w-16 h-48 bg-black/60 border-t border-r border-indigo-900"></div>
                <div className="absolute bottom-0 left-12 w-20 h-64 bg-black/50 border-t border-x border-indigo-800 flex flex-col items-center pt-4 gap-4">
-                  <div className="w-2 h-2 bg-yellow-900/50 rounded-full"></div>
-                  <div className="w-2 h-2 bg-yellow-900/50 rounded-full"></div>
+                  <div className="w-2 h-2 bg-yellow-400/50 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-yellow-400/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
                </div>
                <div className="absolute bottom-0 right-0 w-24 h-56 bg-black/60 border-t border-l border-indigo-900"></div>
                <div className="absolute bottom-0 right-20 w-16 h-32 bg-black/50 border-t border-x border-indigo-800"></div>
@@ -442,32 +466,32 @@ const App: React.FC = () => {
             {/* Main Title Section */}
             <div className="flex flex-col items-center z-10 mt-8 space-y-2">
                {/* Ribbon Banner */}
-               <div className="relative bg-red-600 text-white px-8 py-1 shadow-[0_4px_0_rgba(0,0,0,0.5)] transform -rotate-2 border-2 border-white mb-2">
+               <div className="relative bg-red-600 text-white px-8 py-1 shadow-[0_4px_0_rgba(0,0,0,0.5)] transform -rotate-2 border-2 border-white mb-4">
                   <div className="absolute -left-2 top-0 bottom-0 w-2 bg-red-800 border-l-2 border-white skew-y-12 origin-right"></div>
                   <div className="absolute -right-2 top-0 bottom-0 w-2 bg-red-800 border-r-2 border-white -skew-y-12 origin-left"></div>
                   <span className="text-xl font-black tracking-widest drop-shadow-md font-mono">SINCE 1953</span>
                </div>
                
                <p className="text-yellow-300 text-sm font-bold tracking-tighter drop-shadow-md animate-pulse">
-                 오리지널 국밥 타이쿤의 귀환
+                 찬 바람 불 땐, 따끈한 국밥 한 그릇
                </p>
                
                {/* Main Logo */}
                <div className="text-center relative">
-                  <h1 className="text-6xl font-black tracking-tighter leading-none relative z-10" style={{
+                  <h1 className="text-8xl font-black tracking-tighter leading-tight relative z-10" style={{
                      color: '#fef3c7', // light yellow
-                     WebkitTextStroke: '2px #78350f', // dark brown stroke
-                     textShadow: '4px 4px 0px #000, 4px 6px 0px #78350f'
+                     WebkitTextStroke: '3px #78350f', // dark brown stroke
+                     textShadow: '6px 6px 0px #000, 6px 8px 0px #78350f'
                   }}>
                     국밥<br/>타이쿤
                   </h1>
-                  <div className="absolute -top-6 -right-6 text-4xl animate-[bounce_2s_infinite]">🔥</div>
+                  <div className="absolute -top-6 -right-6 text-5xl animate-[bounce_2s_infinite]">🔥</div>
                </div>
             </div>
 
             {/* Middle Action Text */}
             <div className="z-10 mt-auto mb-10">
-              <div className="bg-black/40 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 animate-pulse">
+              <div className="bg-black/40 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 animate-pulse cursor-pointer hover:scale-105 transition-transform">
                 <span className="text-white font-bold text-lg tracking-widest blink-text">
                   TOUCH TO START
                 </span>
@@ -488,7 +512,7 @@ const App: React.FC = () => {
                <div className="w-40 h-36 z-20 relative -mb-4 drop-shadow-2xl transform scale-110">
                   <MasterPotAsset health={80} />
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-bold px-2 py-0.5 border border-black rounded shadow-md whitespace-nowrap">
-                    형제국밥
+                    1953형제돼지국밥
                   </div>
                </div>
                
@@ -606,7 +630,7 @@ const App: React.FC = () => {
             <div className="w-full shrink-0 h-4 bg-gray-800 border-t border-gray-700"></div>
 
             {phase === GamePhase.GAMEOVER && (
-              <GameOverModal score={score} onRestart={startActualGame} />
+              <GameOverModal score={score} onRestart={startActualGame} onHome={goToTitle} />
             )}
           </>
         )}
