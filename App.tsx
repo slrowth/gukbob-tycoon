@@ -152,8 +152,14 @@ const App: React.FC = () => {
 
       // --- Level System ---
       const calculatedLevel = Math.floor(nextTime / LEVEL_DURATION_TICKS) + 1;
-      // Difficulty Multiplier: 1.1^ (Level - 1) -> 10% compounded per level
-      const difficultyMultiplier = Math.pow(1.1, calculatedLevel - 1);
+      
+      // Difficulty Multiplier: 1.2^ (Level - 1) -> 20% compounded per level
+      // Level 1: 1.0
+      // Level 2: 1.2
+      // Level 3: 1.44
+      // Level 4: 1.72
+      // Level 5: 2.07
+      const difficultyMultiplier = Math.pow(1.2, calculatedLevel - 1);
 
       if (calculatedLevel > level) {
         setLevel(calculatedLevel);
@@ -198,7 +204,10 @@ const App: React.FC = () => {
           return { ...pot, progress: newProgress };
         } 
         if (pot.status === CookingStatus.DONE) {
-          const burnProgress = pot.progress + (100 / (BURN_TIME_GUKBAP - COOKING_TIME_GUKBAP));
+          // Accelerate burning with difficulty level
+          const baseBurnIncrement = 100 / (BURN_TIME_GUKBAP - COOKING_TIME_GUKBAP);
+          const burnProgress = pot.progress + (baseBurnIncrement * difficultyMultiplier);
+          
           if (burnProgress >= 100) {
              anyGukbapBurnt = true;
              return { ...pot, status: CookingStatus.BURNT, progress: 100 };
@@ -220,7 +229,10 @@ const App: React.FC = () => {
           return { ...pot, progress: newProgress };
         }
         if (pot.status === CookingStatus.DONE) {
-           const burnProgress = pot.progress + (100 / (BURN_TIME_RICE - COOKING_TIME_RICE));
+           // Accelerate burning with difficulty level
+           const baseBurnIncrement = 100 / (BURN_TIME_RICE - COOKING_TIME_RICE);
+           const burnProgress = pot.progress + (baseBurnIncrement * difficultyMultiplier);
+           
            if (burnProgress >= 100) {
              anyRiceBurnt = true;
              return { ...pot, status: CookingStatus.BURNT, progress: 100 };
