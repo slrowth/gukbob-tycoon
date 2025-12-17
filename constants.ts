@@ -5,27 +5,27 @@ export const GAME_TICK_MS = 100; // Game loop updates every 100ms
 // Cooking settings (in ticks)
 // 1 second = 10 ticks
 export const COOKING_TIME_GUKBAP = 40; // 4 seconds to cook
-export const BURN_TIME_GUKBAP = 200;   // 20 seconds total (16 seconds safe time)
+export const BURN_TIME_GUKBAP = 300;   // Increased to 30s (was 20s) - More safe time
 export const COOKING_TIME_RICE = 30;   // 3 seconds
-export const BURN_TIME_RICE = 160;     // 16 seconds total (13 seconds safe time)
+export const BURN_TIME_RICE = 250;     // Increased to 25s (was 16s) - More safe time
 
 // Master Pot settings
-export const MASTER_POT_DECAY = 0.5;   // Increased from 0.3 for faster decay
+export const MASTER_POT_DECAY = 0.2;   // Reduced from 0.5 (much slower decay, easier to manage)
 export const MASTER_POT_STIR_RECOVERY = 40;
 export const MASTER_POT_WARNING_THRESHOLD = 70; 
 
 // Customer settings
-export const CUSTOMER_SPAWN_RATE = 0.035; // Increased base rate (0.025 -> 0.035)
-export const SPAWN_RATE_INCREASE_PER_TICK = 0.00004; // Increased ramp up
-export const MAX_SPAWN_RATE = 0.15; // Higher cap
-export const CUSTOMER_MAX_PATIENCE = 150; // 15 sec
-export const CUSTOMER_PATIENCE_DECAY = 0.9; // Increased from 0.6 (Much faster patience drop)
+export const CUSTOMER_SPAWN_RATE = 0.02; // Reduced base rate (0.035 -> 0.02)
+export const SPAWN_RATE_INCREASE_PER_TICK = 0.00002; // Slower ramp up
+export const MAX_SPAWN_RATE = 0.1; // Reduced cap
+export const CUSTOMER_MAX_PATIENCE = 300; // Increased to 30s (was 15s)
+export const CUSTOMER_PATIENCE_DECAY = 1.0; // Adjusted for smoother decay over 30s
 
 // Scoring & Health (Reputation)
 export const MAX_HEALTH = 100;
 export const START_HEALTH = 100; 
-export const HEALTH_DECAY_BASE = 0.08; // Increased base decay (0.05 -> 0.08)
-export const HEALTH_DECAY_RAMP = 0.0001; // Doubled ramp speed
+export const HEALTH_DECAY_BASE = 0.03; // Greatly reduced natural decay (0.08 -> 0.03)
+export const HEALTH_DECAY_RAMP = 0.00002; // Slower difficulty ramp
 export const HEALTH_DAMAGE_MISS = 20; 
 export const HEALTH_DAMAGE_BURN = 15; 
 export const HEALTH_RECOVER_PERFECT = 10; 

@@ -610,19 +610,22 @@ const App: React.FC = () => {
               </div>
 
               {/* Kitchen */}
-              <div className="flex flex-1 gap-2 min-h-0 mt-2 items-stretch">
+              <div className="flex-1 flex gap-2 min-h-0 mt-2 items-end">
                 {/* Left: Ticker & Master Pot */}
                 <div className="flex flex-col justify-end shrink-0 relative w-32">
                    <BrandTicker message={brandMessage} />
                    <MasterPot health={masterPotHealth} onStir={stirMasterPot} />
                 </div>
-                {/* Center: Stove */}
-                <div className="flex-1 flex flex-col min-h-0 relative">
-                   <Stove pots={gukbapPots} onInteract={handleGukbapInteract} />
-                </div>
-                {/* Right: Rice */}
-                <div className="w-20 shrink-0">
-                   <RiceStation pots={ricePots} onInteract={handleRiceInteract} />
+                {/* Right Column: Cooking Area (Vertical Stack) */}
+                <div className="flex flex-col gap-2 min-h-0 justify-end w-full">
+                   {/* Rice (Top) */}
+                   <div className="h-24 shrink-0">
+                      <RiceStation pots={ricePots} onInteract={handleRiceInteract} />
+                   </div>
+                   {/* Stove (Bottom) */}
+                   <div className="shrink-0">
+                      <Stove pots={gukbapPots} onInteract={handleGukbapInteract} />
+                   </div>
                 </div>
               </div>
             </div>

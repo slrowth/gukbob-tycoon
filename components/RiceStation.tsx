@@ -15,8 +15,8 @@ const RiceStation: React.FC<RiceStationProps> = ({ pots, onInteract }) => {
         솥밥
       </div>
       
-      {/* Pots Container - Packed vertically with fixed height items */}
-      <div className="flex flex-col gap-1 flex-1 justify-center min-h-0">
+      {/* Pots Container - Horizontal Row */}
+      <div className="flex flex-row gap-1 flex-1 min-h-0 items-stretch">
         {pots.map((pot) => {
           const isDone = pot.status === CookingStatus.DONE;
           const isBurnt = pot.status === CookingStatus.BURNT;
@@ -26,7 +26,7 @@ const RiceStation: React.FC<RiceStationProps> = ({ pots, onInteract }) => {
               key={pot.id}
               onClick={() => onInteract(pot.id)}
               className={`
-                relative w-full h-14 rounded-lg flex items-center justify-center p-0.5
+                relative h-full flex-1 rounded-lg flex items-center justify-center p-0.5
                 transition-all active:scale-95 overflow-hidden
                 ${pot.status === CookingStatus.EMPTY ? 'opacity-50 hover:opacity-70' : 'opacity-100'}
                 ${isDone ? 'ring-2 ring-green-400 ring-inset z-10' : ''}
