@@ -1,5 +1,5 @@
 // Google Sheets API Client
-// Updated to remove any dependency on Supabase or unused variables.
+// Updated to prevent caching and ensure real-time data retrieval.
 
 const STORAGE_KEY = '_sys_pref_v1';
 
@@ -24,14 +24,17 @@ export const isApiConfigured = () => {
 };
 
 export const fetchLeaderboard = async () => {
-  const url = getApiConfig();
-  if (!url) return [];
+  const baseUrl = getApiConfig();
+  if (!baseUrl) return [];
 
   try {
+    // Add a timestamp to the URL to prevent browser caching (Cache Buster)
+    const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    
     const response = await fetch(url);
     if (!response.ok) throw new Error('Network response was not ok');
     const data = await response.json();
-    return data; // Expected [{ rank, nickname, score, date }, ...]
+    return data; // Expected [{ nickname, score, created_at }, ...]
   } catch (error) {
     console.error("Failed to fetch leaderboard:", error);
     return [];
@@ -44,7 +47,6 @@ export const submitScore = async (nickname: string, score: number) => {
 
   try {
     // Google Apps Script requires text/plain for CORS simple requests to avoid preflight issues.
-    // We explicitly use 'void' or just await without assignment to prevent TypeScript unused variable errors.
     await fetch(url, {
       method: 'POST',
       mode: 'no-cors', // Important: Google Script opaque response
@@ -54,8 +56,7 @@ export const submitScore = async (nickname: string, score: number) => {
       body: JSON.stringify({ nickname, score })
     });
     
-    // Because of 'no-cors', we can't read the response body or status correctly.
-    // We assume success if no network error occurred.
+    // In 'no-cors' mode, we cannot read the response, so we assume success.
     return { success: true };
   } catch (error) {
     console.error("Failed to submit score:", error);

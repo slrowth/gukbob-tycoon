@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RotateCcw, Trophy, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { RotateCcw, Trophy, ChevronDown, ChevronUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchLeaderboard, submitScore, isApiConfigured } from '../apiClient';
 import { LeaderboardEntry } from '../types';
 
@@ -18,7 +18,6 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
   const [isConfigured, setIsConfigured] = useState(false);
   const [isListLoading, setIsListLoading] = useState(false);
 
-  // Check config and fetch leaderboard on mount
   useEffect(() => {
     setIsConfigured(isApiConfigured());
     if (isApiConfigured()) {
@@ -29,8 +28,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
   const loadLeaderboard = async () => {
     setIsListLoading(true);
     const data = await fetchLeaderboard();
-    if (data) {
-      // If "Show All", show up to 100 (which is what API returns), else show top 5
+    if (data && Array.isArray(data)) {
       setLeaderboard(showAll ? data : data.slice(0, 10));
     }
     setIsListLoading(false);
@@ -43,21 +41,18 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
     setLoading(true);
     
     // Submit to Google Sheet
-    // Using 'await' but note that 'no-cors' mode might return success even if failed, 
-    // so we rely on the user having correct setup.
-    await submitScore(nickname.substring(0, 10), score);
+    await submitScore(nickname.substring(0, 8), score);
     
-    // Wait a moment for Google Sheet to process (it can be slow)
+    // Wait slightly longer for Google Sheets to process and reflect the change
     setTimeout(async () => {
         setSubmitted(true);
         setLoading(false);
-        await loadLeaderboard(); // Refresh list
-    }, 1500);
+        await loadLeaderboard(); // Fresh fetch with cache buster
+    }, 2000);
   };
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden">
-      {/* Background with Night Gradient matching Intro */}
       <div 
         className="absolute inset-0 bg-black/95 z-0"
         style={{
@@ -90,9 +85,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
         }
       `}</style>
 
-      {/* Main Modal Card */}
       <div className="relative z-10 w-full max-w-sm h-[90%] mx-4 bg-orange-50 rounded-xl border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,0.5)] text-center flex flex-col p-4">
-        {/* Header Ribbon */}
         <div className="relative -top-8 mb-[-20px] shrink-0">
            <div className="bg-red-600 text-white py-2 px-6 inline-block border-2 border-white shadow-md transform -rotate-2">
               <h2 className="text-3xl font-black tracking-widest drop-shadow-md">영업 종료!</h2>
@@ -103,7 +96,6 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
            수고하셨습니다, 사장님!
         </p>
         
-        {/* Score Board */}
         <div className="bg-gray-800 p-2 rounded-lg border-4 border-gray-600 my-4 shadow-inner relative overflow-hidden shrink-0">
           <p className="text-xs text-gray-400 font-bold mb-1">FINAL SCORE</p>
           <p className="text-4xl font-black text-yellow-400 font-mono tracking-widest drop-shadow-[2px_2px_0_#000]">
@@ -111,7 +103,6 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
           </p>
         </div>
 
-        {/* Form Area */}
         {isConfigured ? (
           !submitted ? (
             <form onSubmit={handleSubmit} className="mb-4 text-left bg-white p-2 rounded border-2 border-gray-200 shrink-0">
@@ -138,8 +129,11 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
               </div>
             </form>
           ) : (
-            <div className="bg-green-100 text-green-800 p-2 rounded mb-4 text-sm font-bold border border-green-300 shrink-0">
-              랭킹에 등록되었습니다!
+            <div className="bg-green-100 text-green-800 p-2 rounded mb-4 text-sm font-bold border border-green-300 shrink-0 flex justify-between items-center">
+              <span>랭킹에 등록되었습니다!</span>
+              <button onClick={loadLeaderboard} className="text-green-600 hover:rotate-180 transition-transform">
+                <RefreshCw size={14} />
+              </button>
             </div>
           )
         ) : (
@@ -154,20 +148,28 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
            </div>
         )}
 
-        {/* Leaderboard List */}
         <div className="flex-1 bg-white border-2 border-gray-300 rounded-lg p-2 overflow-hidden flex flex-col min-h-0">
           <div className="flex justify-between items-center border-b-2 border-gray-100 pb-2 mb-2">
             <h3 className="text-sm font-bold flex items-center gap-2">
               <Trophy size={14} className="text-yellow-500" />
               명예의 전당
             </h3>
-            <button 
-              onClick={() => setShowAll(!showAll)}
-              className="text-[10px] text-gray-500 flex items-center hover:text-black"
-            >
-              {showAll ? '접기' : '더보기'} 
-              {showAll ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={loadLeaderboard}
+                className={`text-gray-400 hover:text-black ${isListLoading ? 'animate-spin' : ''}`}
+                title="새로고침"
+              >
+                <RefreshCw size={12} />
+              </button>
+              <button 
+                onClick={() => setShowAll(!showAll)}
+                className="text-[10px] text-gray-500 flex items-center hover:text-black"
+              >
+                {showAll ? '접기' : '더보기'} 
+                {showAll ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
+              </button>
+            </div>
           </div>
           
           <div className="overflow-y-auto flex-1 no-scrollbar space-y-1">
@@ -175,7 +177,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
                <div className="flex items-center justify-center h-full text-gray-400 text-xs">
                  데이터 없음
                </div>
-            ) : isListLoading ? (
+            ) : isListLoading && leaderboard.length === 0 ? (
                <div className="flex justify-center py-4 gap-1">
                   <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce"></div>
                   <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce delay-75"></div>
@@ -183,8 +185,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
                </div>
             ) : leaderboard.length === 0 ? (
               <div className="flex items-center justify-center h-full flex-col gap-2">
-                 <p className="text-xs text-gray-400 font-bold">아직 기록이 없습니다.</p>
-                 <p className="text-[10px] text-gray-400">첫 번째로 이름을 올려보세요!</p>
+                 <p className="text-xs text-gray-400 font-bold">기록을 불러올 수 없거나 없습니다.</p>
+                 <button onClick={loadLeaderboard} className="text-[10px] text-blue-500 underline">다시 시도</button>
               </div>
             ) : (
               leaderboard.map((entry, index) => (
@@ -214,7 +216,6 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ score, onRestart, onHome 
           </div>
         </div>
 
-        {/* Actions */}
         <div className="mt-4 flex flex-col gap-2 shrink-0">
           <button 
             onClick={onRestart}
